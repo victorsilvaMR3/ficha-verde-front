@@ -1,6 +1,8 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { LogOut, User, Home, Calendar } from 'lucide-react'
+import { Stethoscope } from 'lucide-react';
+
 
 const Layout = () => {
   const { user, logout } = useAuthStore()
