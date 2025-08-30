@@ -504,6 +504,18 @@ const VideoCall = () => {
             <div className="text-2xl font-mono text-gray-900">{formatDuration(callDuration)}</div>
             <div className="text-sm text-gray-500">Duração</div>
           </div>
+          {user?.role === 'DOCTOR' && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  if (confirm('Finalizar a consulta para todos?')) endCall();
+                }}
+                className="inline-flex items-center rounded-md bg-red-600 text-white px-4 py-2 text-sm font-semibold shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                Finalizar consulta
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
