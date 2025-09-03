@@ -41,6 +41,7 @@ const VideoCall = () => {
   const sentOfferRef = useRef(false);
   const pendingIceCandidatesRef = useRef([]);
   const answeredRef = useRef(false);
+  
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -121,6 +122,7 @@ const VideoCall = () => {
     }
   };
 
+
   const initializeWebRTC = async (_roomId, userType, jwt) => {
     try {
       // Permissões de mídia
@@ -155,17 +157,21 @@ const VideoCall = () => {
         userId: user.id,
       });
 
-      // PeerConnection (STUN + opcional TURN via env)
-      const iceServers = [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-      ];
-      // Opcional: se expuser TURN via env do front
-      const TURN_URL = import.meta.env.VITE_TURN_URL;
-      const TURN_USER = import.meta.env.VITE_TURN_USER;
-      const TURN_PASS = import.meta.env.VITE_TURN_PASS;
-      if (TURN_URL && TURN_USER && TURN_PASS) {
-        iceServers.push({ urls: TURN_URL, username: TURN_USER, credential: TURN_PASS });
+      // Obter ICE servers do backend (/turn)
+      let iceServers = [];
+      try {
+        const resp = await fetch('/turn', { cache: 'no-store' });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (Array.isArray(data?.iceServers)) iceServers = data.iceServers;
+        }
+      } catch {}
+      if (!iceServers.length) {
+        // fallback seguro
+        iceServers = [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ];
       }
 
       const isPolite = userType === 'PATIENT';
@@ -304,7 +310,12 @@ const VideoCall = () => {
             pendingIceCandidatesRef.current = [];
           }
         } catch (error) {
-          console.error('Error handling answer:', error);
+          // Evita ruído quando chegar resposta fora de ordem
+          if (error?.name === 'InvalidStateError') {
+            console.warn('Answer fora de ordem ignorada');
+          } else {
+            console.error('Error handling answer:', error);
+          }
         }
       });
 
